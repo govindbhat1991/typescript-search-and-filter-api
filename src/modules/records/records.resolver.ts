@@ -27,6 +27,8 @@ export class RecordsResolver {
     @Args('firstSeenTo', { type: () => DateTimeScalar, nullable: true }) firstSeenTo?: Date,
     @Args('lastSeenFrom', { type: () => DateTimeScalar, nullable: true }) lastSeenFrom?: Date,
     @Args('lastSeenTo', { type: () => DateTimeScalar, nullable: true }) lastSeenTo?: Date,
+    @Args('sortBy', { type: () => String, nullable: true }) sortBy?: string,
+    @Args('sortDir', { type: () => String, nullable: true }) sortDir?: string,
   ) {
     const filters: any = {
       ...(addressTypeId && { addressTypeId }),
@@ -39,8 +41,13 @@ export class RecordsResolver {
       ...(lastSeenFrom && { lastSeenFrom }),
       ...(lastSeenTo && { lastSeenTo }),
     };
+    
+    const sorting: any = {
+      ...(sortBy && { sortBy }),
+      ...(sortDir && { sortDir }),
+    };
     const pageValue = page ? page + 1 : 1;
-    return this.service.search(q, pageValue, size, filters);
+    return this.service.search(q, pageValue, size, filters, sorting);
   }
 
   @Query(() => RecordDto, { name: 'record' })

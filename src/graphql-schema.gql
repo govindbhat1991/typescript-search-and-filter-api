@@ -24,7 +24,7 @@ type Query {
   addressTypes: [AddressTypeDto!]!
   countries: [CountryDto!]!
   record(id: Int!): RecordDto!
-  searchRecords(addressTypeId: Int, countryId: Int, firstSeenFrom: DateTime, firstSeenTo: DateTime, lastSeenFrom: DateTime, lastSeenTo: DateTime, organization: String, page: Int, q: String, size: Int, threatLevelId: Int, usageTypeId: Int): SearchRecordsResponseDto!
+  searchRecords(addressTypeId: Int, countryId: Int, firstSeenFrom: DateTime, firstSeenTo: DateTime, lastSeenFrom: DateTime, lastSeenTo: DateTime, organization: String, page: Int, q: String, size: Int, sortBy: String, sortDir: String, threatLevelId: Int, usageTypeId: Int): SearchRecordsResponseDto!
   threatLevels: [ThreatLevelDto!]!
   usageTypes: [UsageTypeDto!]!
 }

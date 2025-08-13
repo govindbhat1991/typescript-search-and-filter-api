@@ -88,8 +88,8 @@ export class RecordsService {
   }
 
   // builds search query, checks cache, otherwise queries ES
-  async search(q: string, page = 1, size = 20, filters: any = {}) {
-    const key = `search:${q}:p${page}:s${size}:f${JSON.stringify(filters)}`;
+  async search(q: string, page = 1, size = 20, filters: any = {}, sorting: any = {}) {
+    const key = `search:${q}:p${page}:s${size}:f${JSON.stringify(filters)}:s${JSON.stringify(sorting)}`;
     const cached = await this.cacheManager.get(key);
     if (cached) return cached;
 
@@ -147,6 +147,16 @@ export class RecordsService {
       from: (page - 1) * size,
       size,
     };
+
+    // Add sorting if provided
+    if (sorting.sortBy && sorting.sortDir) {
+      const sortDirection = sorting.sortDir.toLowerCase() === 'desc' ? 'desc' : 'asc';
+      const sortField = this.getSortField(sorting.sortBy);
+      
+      if (sortField) {
+        esQuery.sort = [{ [sortField]: sortDirection }];
+      }
+    }
 
     // Update filter names to match the new resolver arguments
     if (filters.addressTypeId) {
@@ -254,5 +264,29 @@ export class RecordsService {
     const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     const ipv6Regex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
     return ipv4Regex.test(ip) || ipv6Regex.test(ip);
+  }
+
+  // Helper method to map resolver sortBy field to Elasticsearch sort field
+  private getSortField(sortBy: string): string | undefined {
+    switch (sortBy) {
+      case 'id':
+        return 'id';
+      case 'organization':
+        return 'organization';
+      case 'addressIp':
+        return 'addressIp';
+      case 'firstSeen':
+        return 'firstSeen';
+      case 'lastSeen':
+        return 'lastSeen';
+      case 'threatLevel':
+        return 'threatLevel.name';
+      case 'usageType':
+        return 'usageType.name';
+      case 'country':
+        return 'country.name';
+      default:
+        return undefined;
+    }
   }
 }
