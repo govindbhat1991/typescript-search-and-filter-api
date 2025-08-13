@@ -1,43 +1,6 @@
 import { Field, ObjectType, Int, Float } from '@nestjs/graphql';
-
-@ObjectType()
-export class AddressTypeDto {
-  @Field(() => Int)
-  id: number;
-
-  @Field(() => String)
-  name: string;
-}
-
-@ObjectType()
-export class CountryDto {
-  @Field(() => Int)
-  id: number;
-
-  @Field(() => String)
-  name: string;
-
-  @Field(() => String)
-  code: string;
-}
-
-@ObjectType()
-export class UsageTypeDto {
-  @Field(() => Int)
-  id: number;
-
-  @Field(() => String)
-  name: string;
-}
-
-@ObjectType()
-export class ThreatLevelDto {
-  @Field(() => Int)
-  id: number;
-
-  @Field(() => String)
-  name: string;
-}
+import { DateTimeScalar } from '../../../common/graphql/date-time.scalar';
+import { AddressTypeDto, CountryDto, UsageTypeDto, ThreatLevelDto } from './reference.dto';
 
 @ObjectType()
 export class RecordDto {
@@ -47,8 +10,8 @@ export class RecordDto {
   @Field(() => String)
   addressIp: string;
 
-  @Field(() => AddressTypeDto)
-  addressType: AddressTypeDto;
+  @Field(() => AddressTypeDto, { nullable: true })
+  addressType?: AddressTypeDto;
 
   @Field(() => String, { nullable: true })
   organization?: string;
@@ -56,19 +19,19 @@ export class RecordDto {
   @Field(() => CountryDto, { nullable: true })
   country?: CountryDto;
 
-  @Field(() => UsageTypeDto)
-  usageType: UsageTypeDto;
+  @Field(() => UsageTypeDto, { nullable: true })
+  usageType?: UsageTypeDto;
 
-  @Field(() => ThreatLevelDto)
-  threatLevel: ThreatLevelDto;
+  @Field(() => ThreatLevelDto, { nullable: true })
+  threatLevel?: ThreatLevelDto;
 
   @Field(() => String, { nullable: true })
   threatDetails?: string;
 
-  @Field(() => Date, { nullable: true })
+  @Field(() => DateTimeScalar, { nullable: true })
   firstSeen?: Date;
 
-  @Field(() => Date, { nullable: true })
+  @Field(() => DateTimeScalar, { nullable: true })
   lastSeen?: Date;
 }
 
@@ -76,6 +39,15 @@ export class RecordDto {
 export class SearchRecordsResponseDto {
   @Field(() => Int)
   total: number;
+
+  @Field(() => Int)
+  currentPage: number;
+
+  @Field(() => Int)
+  pageSize: number;
+
+  @Field(() => Int)
+  totalPages: number;
 
   @Field(() => [RecordDto])
   items: RecordDto[];

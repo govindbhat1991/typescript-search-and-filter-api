@@ -108,7 +108,7 @@ export class DbSyncService implements OnModuleInit {
 
   // Method to manually trigger sync (useful for testing)
   async manualSync() {
-    console.log('🔄 Manual sync triggered...');
+    console.log('Manual sync triggered...');
     await this.syncDataFromDatabase();
   }
 } 

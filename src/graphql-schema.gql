@@ -13,9 +13,7 @@ type CountryDto {
   name: String!
 }
 
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
+"""DateTime custom scalar type"""
 scalar DateTime
 
 type Mutation {
@@ -23,26 +21,33 @@ type Mutation {
 }
 
 type Query {
+  addressTypes: [AddressTypeDto!]!
+  countries: [CountryDto!]!
   record(id: Int!): RecordDto!
   searchRecords(addressTypeId: Int, countryId: Int, firstSeenFrom: DateTime, firstSeenTo: DateTime, lastSeenFrom: DateTime, lastSeenTo: DateTime, organization: String, page: Int, q: String, size: Int, threatLevelId: Int, usageTypeId: Int): SearchRecordsResponseDto!
+  threatLevels: [ThreatLevelDto!]!
+  usageTypes: [UsageTypeDto!]!
 }
 
 type RecordDto {
   addressIp: String!
-  addressType: AddressTypeDto!
+  addressType: AddressTypeDto
   country: CountryDto
   firstSeen: DateTime
   id: Int!
   lastSeen: DateTime
   organization: String
   threatDetails: String
-  threatLevel: ThreatLevelDto!
-  usageType: UsageTypeDto!
+  threatLevel: ThreatLevelDto
+  usageType: UsageTypeDto
 }
 
 type SearchRecordsResponseDto {
+  currentPage: Int!
   items: [RecordDto!]!
+  pageSize: Int!
   total: Int!
+  totalPages: Int!
 }
 
 type ThreatLevelDto {

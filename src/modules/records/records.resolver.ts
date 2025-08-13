@@ -2,7 +2,9 @@ import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 
 import { RecordsService } from './records.service';
 import { SearchRecordsResponseDto, RecordDto } from './dto/record.dto';
+import { AddressTypeDto, CountryDto, ThreatLevelDto, UsageTypeDto } from './dto/reference.dto';
 import { DbSyncService } from '../elasticsearch/db-sync.service';
+import { DateTimeScalar } from '../../common/graphql/date-time.scalar';
 
 @Resolver()
 export class RecordsResolver {
@@ -21,10 +23,10 @@ export class RecordsResolver {
     @Args('usageTypeId', { type: () => Int, nullable: true }) usageTypeId?: number,
     @Args('countryId', { type: () => Int, nullable: true }) countryId?: number,
     @Args('organization', { type: () => String, nullable: true }) organization?: string,
-    @Args('firstSeenFrom', { type: () => Date, nullable: true }) firstSeenFrom?: Date,
-    @Args('firstSeenTo', { type: () => Date, nullable: true }) firstSeenTo?: Date,
-    @Args('lastSeenFrom', { type: () => Date, nullable: true }) lastSeenFrom?: Date,
-    @Args('lastSeenTo', { type: () => Date, nullable: true }) lastSeenTo?: Date,
+    @Args('firstSeenFrom', { type: () => DateTimeScalar, nullable: true }) firstSeenFrom?: Date,
+    @Args('firstSeenTo', { type: () => DateTimeScalar, nullable: true }) firstSeenTo?: Date,
+    @Args('lastSeenFrom', { type: () => DateTimeScalar, nullable: true }) lastSeenFrom?: Date,
+    @Args('lastSeenTo', { type: () => DateTimeScalar, nullable: true }) lastSeenTo?: Date,
   ) {
     const filters: any = {
       ...(addressTypeId && { addressTypeId }),
@@ -37,12 +39,33 @@ export class RecordsResolver {
       ...(lastSeenFrom && { lastSeenFrom }),
       ...(lastSeenTo && { lastSeenTo }),
     };
-    return this.service.search(q, page, size, filters);
+    const pageValue = page ? page + 1 : 1;
+    return this.service.search(q, pageValue, size, filters);
   }
 
   @Query(() => RecordDto, { name: 'record' })
   async getRecord(@Args('id', { type: () => Int }) id: number) {
     return this.service.findById(id);
+  }
+
+  @Query(() => [AddressTypeDto], { name: 'addressTypes' })
+  async getAddressTypes() {
+    return this.service.getAddressTypes();
+  }
+
+  @Query(() => [CountryDto], { name: 'countries' })
+  async getCountries() {
+    return this.service.getCountries();
+  }
+
+  @Query(() => [ThreatLevelDto], { name: 'threatLevels' })
+  async getThreatLevels() {
+    return this.service.getThreatLevels();
+  }
+
+  @Query(() => [UsageTypeDto], { name: 'usageTypes' })
+  async getUsageTypes() {
+    return this.service.getUsageTypes();
   }
 
   @Mutation(() => String, { name: 'syncDatabaseToElasticsearch' })

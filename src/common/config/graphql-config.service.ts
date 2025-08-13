@@ -6,6 +6,7 @@ import { join } from 'path';
 import { cwd } from 'process';
 import { httpStatusPlugin } from '../exceptions/exception.plugin';
 import { EnvironmentVariables } from '../helper/env.validation';
+import { DateTimeScalar } from '../graphql/date-time.scalar';
 
 @Injectable()
 export class GraphqlConfigService
@@ -28,6 +29,9 @@ export class GraphqlConfigService
       csrfPrevention: this.configService.get('NODE_ENV') !== 'development',
       context: ({ req }) => ({ req }),
       introspection: this.configService.get('NODE_ENV') !== 'production',
+      resolvers: {
+        DateTime: DateTimeScalar,
+      },
       plugins: [
         httpStatusPlugin,
         // this.configService.get('NODE_ENV') === 'production'

@@ -7,6 +7,10 @@ import { Repository } from 'typeorm';
 
 import { SearchService } from '../elasticsearch/search.service';
 import { Record as RecordEntity } from './entities/record.entity';
+import { AddressType } from './entities/address-type.entity';
+import { Country } from './entities/country.entity';
+import { ThreatLevel } from './entities/threat-level.entity';
+import { UsageType } from './entities/usage-type.entity';
 
 interface ElasticsearchResponse {
   hits: {
@@ -22,9 +26,66 @@ export class RecordsService {
   constructor(
     @InjectRepository(RecordEntity)
     private readonly repo: Repository<RecordEntity>,
+    @InjectRepository(AddressType)
+    private readonly addressTypeRepo: Repository<AddressType>,
+    @InjectRepository(Country)
+    private readonly countryRepo: Repository<Country>,
+    @InjectRepository(ThreatLevel)
+    private readonly threatLevelRepo: Repository<ThreatLevel>,
+    @InjectRepository(UsageType)
+    private readonly usageTypeRepo: Repository<UsageType>,
     private readonly elasticSearch: SearchService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
+
+  // Reference data methods
+  async getAddressTypes() {
+    const key = 'addressTypes';
+    const cached = await this.cacheManager.get(key);
+    if (cached) return cached;
+    
+    const addressTypes = await this.addressTypeRepo.find({
+      order: { name: 'ASC' }
+    });
+    await this.cacheManager.set(key, addressTypes, 3600); // Cache for 1 hour
+    return addressTypes;
+  }
+
+  async getCountries() {
+    const key = 'countries';
+    const cached = await this.cacheManager.get(key);
+    if (cached) return cached;
+    
+    const countries = await this.countryRepo.find({
+      order: { name: 'ASC' }
+    });
+    await this.cacheManager.set(key, countries, 3600); // Cache for 1 hour
+    return countries;
+  }
+
+  async getThreatLevels() {
+    const key = 'threatLevels';
+    const cached = await this.cacheManager.get(key);
+    if (cached) return cached;
+    
+    const threatLevels = await this.threatLevelRepo.find({
+      order: { name: 'ASC' }
+    });
+    await this.cacheManager.set(key, threatLevels, 3600); // Cache for 1 hour
+    return threatLevels;
+  }
+
+  async getUsageTypes() {
+    const key = 'usageTypes';
+    const cached = await this.cacheManager.get(key);
+    if (cached) return cached;
+    
+    const usageTypes = await this.usageTypeRepo.find({
+      order: { name: 'ASC' }
+    });
+    await this.cacheManager.set(key, usageTypes, 3600); // Cache for 1 hour
+    return usageTypes;
+  }
 
   // builds search query, checks cache, otherwise queries ES
   async search(q: string, page = 1, size = 20, filters: any = {}) {
@@ -40,7 +101,7 @@ export class RecordsService {
                 {
                   bool: {
                     should: [
-                      // Text-based search for non-IP fields
+                      // Text-based search for non-IP fields (case-insensitive using match)
                       {
                         multi_match: {
                           query: q,
@@ -55,6 +116,20 @@ export class RecordsService {
                           type: 'best_fields',
                           fuzziness: 'AUTO'
                         },
+                      },
+                      // Case-insensitive search using match queries
+                      {
+                        bool: {
+                          should: [
+                            { match: { organization: { query: q, operator: 'or' } } },
+                            { match: { threatDetails: { query: q, operator: 'or' } } },
+                            { match: { 'addressType.name': { query: q, operator: 'or' } } },
+                            { match: { 'country.name': { query: q, operator: 'or' } } },
+                            { match: { 'usageType.name': { query: q, operator: 'or' } } },
+                            { match: { 'threatLevel.name': { query: q, operator: 'or' } } },
+                          ],
+                          minimum_should_match: 1
+                        }
                       },
                       // IP address search (only if query looks like an IP)
                       ...(this.isValidIP(q) ? [{
@@ -96,7 +171,9 @@ export class RecordsService {
     }
     if (filters.organization) {
       esQuery.query.bool.filter.push({
-        match: { organization: filters.organization },
+        match: { 
+          organization: filters.organization
+        },
       });
     }
     if (filters.firstSeenFrom || filters.firstSeenTo) {
@@ -124,8 +201,41 @@ export class RecordsService {
       typeof resp.hits?.total === 'number'
         ? resp.hits.total
         : (resp.hits?.total?.value ?? 0);
-    const items = resp.hits.hits.map((h) => h._source);
-    const result = { total, items };
+    
+    // Process items and handle null values
+    const items = resp.hits.hits
+      .map((h) => h._source)
+      .filter((item) => {
+        // Filter out items that don't have required fields
+        return item && item.id && item.addressIp;
+      })
+      .map((item) => {
+        // Ensure all required fields have values, provide defaults if needed
+        return {
+          ...item,
+          // Ensure addressType has a valid structure
+          addressType: item.addressType || { id: 0, name: 'Unknown' },
+          // Ensure usageType has a valid structure
+          usageType: item.usageType || { id: 0, name: 'Unknown' },
+          // Ensure threatLevel has a valid structure
+          threatLevel: item.threatLevel || { id: 0, name: 'Unknown' },
+          // Ensure country has a valid structure if present
+          country: item.country || null,
+        };
+      });
+    
+    // Calculate page information
+    const currentPage = page;
+    const pageSize = size;
+    const totalPages = Math.ceil(total / pageSize);
+    
+    const result = { 
+      total, 
+      currentPage, 
+      pageSize, 
+      totalPages, 
+      items 
+    };
     await this.cacheManager.set(key, result, 30);
     return result;
   }
