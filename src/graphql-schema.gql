@@ -1,0 +1,56 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AddressTypeDto {
+  id: Int!
+  name: String!
+}
+
+type CountryDto {
+  code: String!
+  id: Int!
+  name: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mutation {
+  syncDatabaseToElasticsearch: String!
+}
+
+type Query {
+  record(id: Int!): RecordDto!
+  searchRecords(addressTypeId: Int, countryId: Int, firstSeenFrom: DateTime, firstSeenTo: DateTime, lastSeenFrom: DateTime, lastSeenTo: DateTime, organization: String, page: Int, q: String, size: Int, threatLevelId: Int, usageTypeId: Int): SearchRecordsResponseDto!
+}
+
+type RecordDto {
+  addressIp: String!
+  addressType: AddressTypeDto!
+  country: CountryDto
+  firstSeen: DateTime
+  id: Int!
+  lastSeen: DateTime
+  organization: String
+  threatDetails: String
+  threatLevel: ThreatLevelDto!
+  usageType: UsageTypeDto!
+}
+
+type SearchRecordsResponseDto {
+  items: [RecordDto!]!
+  total: Int!
+}
+
+type ThreatLevelDto {
+  id: Int!
+  name: String!
+}
+
+type UsageTypeDto {
+  id: Int!
+  name: String!
+}
